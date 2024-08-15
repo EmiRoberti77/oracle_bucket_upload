@@ -73,15 +73,12 @@ async function downlaodFile(): Promise<void> {
     };
     const response = await objectStorageClient.getObject(downloadRequest);
 
-    if (response.value instanceof require("stream").Readable) {
-      const filePath = path.join(__dirname, `OCL-${objectName}`);
-      const writeStream = fs.createWriteStream(filePath);
-      const readableStream = response.value as Readable;
-      await pipeline(readableStream, writeStream);
-      console.log(OBJECT_DOWNLOADED);
-    } else {
-      console.error("FAILED stream type");
-    }
+    const readableStream = response.value as Readable;
+    console.log(readableStream);
+    const filePath = path.join(__dirname, `${objectName}.copy`);
+    const writeStream = fs.createWriteStream(filePath);
+    await pipeline(readableStream as any, writeStream);
+    console.log(OBJECT_DOWNLOADED);
   } catch (err: any) {
     console.error(err.message);
   }
