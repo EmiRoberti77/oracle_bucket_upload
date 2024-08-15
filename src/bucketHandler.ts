@@ -4,22 +4,39 @@ import * as path from "path";
 import { Readable } from "stream";
 import { promisify } from "util";
 import { pipeline as pipelineCallback } from "stream";
+import { bucketParams } from "./model/BucketParams";
+import dotenv from "dotenv";
+import { ApplicationEnv } from "./model/Enviroments";
+dotenv.config();
+var isProd = false;
+
+function getNodeEnv() {
+  switch (process.env.NODE_ENV) {
+    case ApplicationEnv.PROD:
+      isProd = true;
+      break;
+    default:
+      isProd = false;
+  }
+}
+
+console.log("running env:", process.env.NODE_ENV);
 
 const pipeline = promisify(pipelineCallback);
 const OBJECT_DOWNLOADED = "success_object_downloaded";
+const OBJECT_UPLOADED = "success_object_upload";
+const ERROR = (msg: string) => `Error:${msg};`;
 
 const provider = new oci.common.ConfigFileAuthenticationDetailsProvider();
 const objectStorageClient = new oci.objectstorage.ObjectStorageClient({
   authenticationDetailsProvider: provider,
 });
 
-const namespaceName = "sdeijlccaauz";
-const bucketName = "emitest";
-const objectName = "iscs_block.emi";
-const filePath = "iscs_block.emi";
-
-async function uploadObject() {
+const { namespaceName, bucketName, objectName, filePath } = bucketParams;
+async function uploadObject(): Promise<void> {
   try {
+    if (!filePath) throw new Error(ERROR("filePath undefined"));
+
     const filestream = fs.createReadStream(filePath);
     const fileStats = fs.statSync(filePath);
     const uploadRequest = {
@@ -31,7 +48,7 @@ async function uploadObject() {
     };
 
     const response = await objectStorageClient.putObject(uploadRequest);
-    console.log("SUCCESS", response);
+    console.log(OBJECT_UPLOADED, response);
   } catch (err: any) {
     console.error(err.message);
   }
@@ -84,13 +101,14 @@ async function downlaodFile(): Promise<void> {
   }
 }
 
-//uploadObject();
-listFilesInBucket()
-  .then((success) => console.log(success))
-  .catch((err) => console.error(err));
+uploadObject().then((success) => {
+  listFilesInBucket()
+    .then((success) => console.log(success))
+    .catch((err) => console.error(err));
 
-downlaodFile()
-  .then((success) => console.log(success))
-  .catch((err) => {
-    console.log(err);
-  });
+  downlaodFile()
+    .then((success) => console.log(success))
+    .catch((err) => {
+      console.log(err);
+    });
+});
