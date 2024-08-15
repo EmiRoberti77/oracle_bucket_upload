@@ -7,7 +7,6 @@ export interface BucketParams {
   objectName: string;
   filePath?: string;
 }
-console.log("process.env.NAMESPACENAME!", process.env.NAMESPACENAME);
 export const bucketParams: BucketParams = {
   namespaceName: process.env.NAMESPACENAME!,
   bucketName: process.env.BUCKETNAME!,
