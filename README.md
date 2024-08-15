@@ -47,15 +47,19 @@ After installing the OCI CLI, you need to configure it with your Oracle Cloud ac
 ```bash
 oci setup config
 ```
+
 2.	The setup process will prompt you for the following information:
+```
 	•	User OCID: Your user’s unique identifier in Oracle Cloud.
 	•	Tenancy OCID: The unique identifier of your Oracle Cloud tenancy.
 	•	Region: The region you want to connect to (e.g., us-ashburn-1).
 	•	Compartment OCID: The compartment where your resources are stored (optional).
 	•	API Key: The path to your API private key file (will be generated during setup if not provided).
 	•	Fingerprint: A unique identifier for your API key (will be generated during setup if not provided).
-	3.	If you don’t have an API key, the setup will generate one for you and help you upload the public key to your Oracle Cloud account.
-	4.	Once the setup is complete, your configuration will be saved in the ~/.oci/config file.
+```
+3.	If you don’t have an API key, the setup will generate one for you and help you upload the public key to your Oracle Cloud account.
+4.	Once the setup is complete, your configuration will be saved in the ~/.oci/config file.
+
 
 # 2.2 Test Your Configuration
 
