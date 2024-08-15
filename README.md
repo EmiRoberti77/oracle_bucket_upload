@@ -11,7 +11,7 @@ Before you begin, ensure you have the following:
 
 # Step 1: Install the OCI CLI
 
-The Oracle Cloud Infrastructure Command Line Interface (OCI CLI) is a powerful tool for interacting with Oracle Cloud services.
+The Oracle Cloud Infrastructure Command Line Interface (OCI CLI) is a tool for interacting with Oracle Cloud services. it allows you to access and configure all resources
 
 # 1.1 Install Using the Install Script (Recommended but you can also use brew)
 
