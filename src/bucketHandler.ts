@@ -4,7 +4,8 @@ import * as path from "path";
 import { Readable } from "stream";
 import { promisify } from "util";
 import { pipeline as pipelineCallback } from "stream";
-import { bucketParams } from "./model/BucketParams";
+import { BucketBlock, samplebucketParams } from "./model/BucketParams";
+import { OBJECT_DOWNLOADED, OBJECT_UPLOADED, ERROR } from "./util/messages";
 import dotenv from "dotenv";
 import { ApplicationEnv } from "./model/Enviroments";
 dotenv.config();
@@ -21,34 +22,38 @@ function getNodeEnv() {
 }
 
 console.log("running env:", process.env.NODE_ENV);
-
-const pipeline = promisify(pipelineCallback);
-const OBJECT_DOWNLOADED = "success_object_downloaded";
-const OBJECT_UPLOADED = "success_object_upload";
-const ERROR = (msg: string) => `Error:${msg};`;
+export const pipeline = promisify(pipelineCallback);
+const { namespaceName, bucketName, fileTransferList, read_dir } =
+  samplebucketParams;
 
 const provider = new oci.common.ConfigFileAuthenticationDetailsProvider();
 const objectStorageClient = new oci.objectstorage.ObjectStorageClient({
   authenticationDetailsProvider: provider,
 });
 
-const { namespaceName, bucketName, objectName, filePath } = bucketParams;
 async function uploadObject(): Promise<void> {
   try {
-    if (!filePath) throw new Error(ERROR("filePath undefined"));
+    if (!fileTransferList[0].filePath)
+      throw new Error(ERROR("filePath undefined"));
 
-    const filestream = fs.createReadStream(filePath);
-    const fileStats = fs.statSync(filePath);
-    const uploadRequest = {
-      namespaceName,
-      bucketName,
-      objectName,
-      putObjectBody: filestream,
-      contentLength: fileStats.size,
-    };
+    const files = fs.readdirSync(read_dir);
+    for (var file of files) {
+      const fullPath = path.join(__dirname, "..", read_dir, file);
+      console.log(fullPath);
+      const filestream = fs.createReadStream(fullPath);
+      const fileStats = fs.statSync(fullPath);
 
-    const response = await objectStorageClient.putObject(uploadRequest);
-    console.log(OBJECT_UPLOADED, response);
+      const uploadRequest = {
+        namespaceName,
+        bucketName,
+        objectName: file,
+        putObjectBody: filestream,
+        contentLength: fileStats.size,
+      };
+
+      const response = await objectStorageClient.putObject(uploadRequest);
+      console.log(OBJECT_UPLOADED, response);
+    }
   } catch (err: any) {
     console.error(err.message);
   }
@@ -86,13 +91,16 @@ async function downlaodFile(): Promise<void> {
     const downloadRequest = {
       namespaceName,
       bucketName,
-      objectName,
+      objectName: fileTransferList[0].objectName,
     };
     const response = await objectStorageClient.getObject(downloadRequest);
 
     const readableStream = response.value as Readable;
     console.log(readableStream);
-    const filePath = path.join(__dirname, `${objectName}.copy`);
+    const filePath = path.join(
+      __dirname,
+      `${fileTransferList[0].objectName}.copy`
+    );
     const writeStream = fs.createWriteStream(filePath);
     await pipeline(readableStream as any, writeStream);
     console.log(OBJECT_DOWNLOADED);
@@ -101,14 +109,16 @@ async function downlaodFile(): Promise<void> {
   }
 }
 
-uploadObject().then((success) => {
-  listFilesInBucket()
-    .then((success) => console.log(success))
-    .catch((err) => console.error(err));
+uploadObject()
+  .then((success) => {
+    listFilesInBucket()
+      .then((success) => console.log(success))
+      .catch((err) => console.error(err));
 
-  downlaodFile()
-    .then((success) => console.log(success))
-    .catch((err) => {
-      console.log(err);
-    });
-});
+    downlaodFile()
+      .then((success) => console.log(success))
+      .catch((err) => {
+        console.log(err);
+      });
+  })
+  .catch((err) => console.error(err));
